@@ -18,5 +18,7 @@ snapshot_download(SOURCE, revision=revision, local_dir=LOCAL_DIR)
 
 api.create_repo(TARGET, repo_type="model", private=False, exist_ok=True)
 print(f"Uploading to {TARGET} ...")
-api.upload_large_folder(repo_id=TARGET, repo_type="model", folder_path=LOCAL_DIR)
+api.upload_folder(repo_id=TARGET, repo_type="model", folder_path=LOCAL_DIR,
+                  ignore_patterns=[".cache/**"],
+                  commit_message=f"Mirror {SOURCE}@{revision}")
 print(f"Done: https://huggingface.co/{TARGET} (source revision {revision})")
