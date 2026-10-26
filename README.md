@@ -66,7 +66,7 @@ import os
 import torch
 from transformers import AutoModel, AutoTokenizer
 
-model_name = 'baidu/Unlimited-OCR'
+model_name = 'Oguzbayrakdar/Unlimited-OCR'
 
 tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 model = AutoModel.from_pretrained(
@@ -165,7 +165,7 @@ uv pip install pymupdf==1.27.2.2
 Start the SGLang server:
 ```shell
 python -m sglang.launch_server \
-    --model baidu/Unlimited-OCR \
+    --model Oguzbayrakdar/Unlimited-OCR \
     --served-model-name Unlimited-OCR \
     --attention-backend fa3 \
     --page-size 1 \
@@ -288,7 +288,7 @@ python infer.py \
 
 Useful options:
 ```shell
---model_dir baidu/Unlimited-OCR   # Local path or Hugging Face model ID
+--model_dir Oguzbayrakdar/Unlimited-OCR   # Local path or Hugging Face model ID
 --gpu 0                           # CUDA_VISIBLE_DEVICES value
 --server_log ./log/sglang_server.log
 ```
