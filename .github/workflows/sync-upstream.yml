@@ -1,0 +1,67 @@
+name: Sync upstream
+
+# Keeps this repo in sync with github.com/baidu/Unlimited-OCR and our Hugging Face
+# copy (Oguzbayrakdar/Unlimited-OCR) in sync with huggingface.co/baidu/Unlimited-OCR.
+on:
+  schedule:
+    - cron: "17 3 * * *" # daily, 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: sync-upstream
+
+jobs:
+  github:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge baidu/Unlimited-OCR into main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/baidu/Unlimited-OCR.git
+          git fetch upstream main
+
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "Already up to date with upstream."
+            exit 0
+          fi
+
+          # On conflicting lines upstream wins; our model-id change is re-applied below.
+          git merge -X theirs --no-edit -m "Merge upstream baidu/Unlimited-OCR" upstream/main
+
+          # Point code at our Hugging Face copy; links to baidu's pages (github.com/baidu/...,
+          # huggingface.co/baidu/...) are left as attribution.
+          git ls-files -z -- '*.py' '*.md' '*.sh' ':!scripts' ':!.github' \
+            | xargs -0 perl -pi -e 's#(?<![/.\w])baidu/Unlimited-OCR#Oguzbayrakdar/Unlimited-OCR#g'
+          if ! git diff --quiet; then
+            git commit -am "Use our Hugging Face copy Oguzbayrakdar/Unlimited-OCR"
+          fi
+
+          git push origin HEAD:main
+
+  huggingface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install "huggingface_hub==2.3.0"
+
+      - name: Mirror baidu/Unlimited-OCR to Oguzbayrakdar/Unlimited-OCR
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret is missing (Settings > Secrets and variables > Actions)"
+            exit 1
+          fi
+          python scripts/mirror_to_hf.py
